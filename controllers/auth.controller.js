@@ -29,8 +29,26 @@ export const signUp = async (req, res, next) => {
 
 export const signIn = async (req, res, next) => {
   try {
-
-    //TODO:
+    const{email,password} = req.body;
+    if(!email || !password){
+      const error = new Error("email, and password are requried");
+      error.statusCode = 400;
+      throw error;
+    }
+    const newUser = await User.findOne({email});
+    if(!newUser){
+      const error = new Error("User not found");
+      error.statusCode = 404;
+      throw error;
+    }
+    const isMatch = await bcrypt.compare(password,newUser.password);
+    if(!isMathc){
+      const error = new Error("invalid credential");
+      error.statusCode = 401;
+      throw error;
+    }
+    req.session.userId = newUser._id;
+    res.status(200).json({success:true,data:[newUser]})
   } catch (err) {
     next(err);
   }
@@ -38,7 +56,17 @@ export const signIn = async (req, res, next) => {
 
 export const logout = async (req, res, next) => {
   try {
-    //todo:
+    req.session.logout((error)=>{
+      if(error){
+        next(error)
+      }
+      res.clearCookie("connect.sid");
+      res.status(200).json({
+        success:true,
+        message:"Logged out"
+      })
+
+    })
 
   } catch (err) {
     next(err);
